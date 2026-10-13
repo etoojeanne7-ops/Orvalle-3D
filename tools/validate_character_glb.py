@@ -44,7 +44,7 @@ def inspect_glb(path: Path) -> list[str]:
                 errors.append(f"{path}: le premier chunk n'est pas JSON")
             else:
                 try:
-                    json_doc = json.loads(chunk.decode("utf-8").rstrip(" \\t\\r\\n\\x00"))
+                    json_doc = json.loads(chunk.decode("utf-8").rstrip(" \t\r\n\x00"))
                 except (UnicodeDecodeError, json.JSONDecodeError) as exc:
                     errors.append(f"{path}: JSON glTF invalide ({exc})")
             first_chunk = False
@@ -93,12 +93,12 @@ def main() -> int:
         else:
             failures.extend(inspect_glb(path))
     if failures:
-        print("\\nÉCHEC DU CONTRÔLE STRUCTUREL :")
+        print("\nÉCHEC DU CONTRÔLE STRUCTUREL :")
         for failure in failures:
             print(f" - {failure}")
-        print("\\nCe contrôle technique ne remplace pas une revue visuelle humaine.")
+        print("\nCe contrôle technique ne remplace pas une revue visuelle humaine.")
         return 1
-    print("\\nPASS structurel uniquement. La fidélité visuelle, le rig, les expressions, le jeu d'acteur et les performances restent à contrôler.")
+    print("\nPASS structurel uniquement. La fidélité visuelle, le rig, les expressions, le jeu d'acteur et les performances restent à contrôler.")
     return 0
 
 
