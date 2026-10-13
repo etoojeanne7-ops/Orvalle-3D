@@ -6,11 +6,13 @@ on:
     paths:
       - "OrvalleNative/characters/**"
       - "tools/validate_character_glb.py"
+      - "tools/test_validate_character_glb.py"
       - ".github/workflows/character-realism-gate.yml"
   pull_request:
     paths:
       - "OrvalleNative/characters/**"
       - "tools/validate_character_glb.py"
+      - "tools/test_validate_character_glb.py"
       - ".github/workflows/character-realism-gate.yml"
 
 permissions:
@@ -22,7 +24,10 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Check required Python version
+      - name: Check Python version
         run: python3 --version
-      - name: Validate GLB structure and minimum required features
+      - name: Test validator logic independently of production assets
+        working-directory: tools
+        run: python3 -m unittest -v test_validate_character_glb.py
+      - name: Validate production character assets
         run: python3 tools/validate_character_glb.py OrvalleNative/characters
