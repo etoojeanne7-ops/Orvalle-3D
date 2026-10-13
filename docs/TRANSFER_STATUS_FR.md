@@ -1,22 +1,22 @@
 # Orvalle — état du transfert
 
-Date de préparation : 13 octobre 2026.
+Date de mise à jour : 13 octobre 2026.
 
-## Déjà ajouté à ce dépôt
+## Ajouts réalisés dans GitHub
+- Guide de chaîne de production 3D et critères de réalisme.
+- Script Blender d'export des personnages sélectionnés vers GLB.
+- Validateur GLB sans dépendances, qui vérifie maillage, matériaux, textures, skinning, animation et scène.
+- Workflow GitHub Actions dédié au contrôle des modèles.
 
-- README de dépôt.
-- Workflow GitHub Actions pour vérifier les fichiers, importer le projet Godot, lancer les tests de parité terrain et exécuter un test de démarrage headless.
-- Fichier .gitignore pour les fichiers générés par Godot.
+## Résultat CI observé
+L'exécution du contrôle des personnages s'est terminée en échec car les fichiers requis Lena.glb et Marec.glb ne sont pas encore dans le dépôt. C'est un échec réel et attendu : il empêche de faire passer les placeholders pour des personnages finis.
 
-## En attente d'importation
+Lien du résultat : https://github.com/etoojeanne7-ops/Orvalle-3D/actions/runs/38454162365
 
-Le paquet `Orvalle-3D-CI-Prepared.zip` contient le workspace préparé, dont le dossier `OrvalleNative/`, les scripts GDScript, la scène principale, les images et les tests. Le paquet complet n'est pas encore décompressé dans l'arborescence GitHub. Il faut importer les fichiers du dossier interne `orvalle-workspace/` à la racine du dépôt en préservant leurs chemins.
+## En attente
+- Importer le workspace Godot complet et ses ressources binaires depuis Orvalle-3D-CI-Prepared.zip.
+- Créer ou acquérir légalement les modèles 3D finaux, les riguer, les texturer et exporter les animations.
+- Valider visuellement les visages, la peau, les cheveux, les mains, les déformations et le jeu d'acteur.
+- Tester Godot, les performances sur le matériel cible et les exports APK/AAB et Windows EXE.
 
-## Ce qui n'est pas encore validé
-
-- La compilation et l'exécution Godot.
-- Les exports APK/AAB et Windows EXE.
-- Les performances sur appareil réel.
-- La présence de modèles 3D photoréalistes définitifs : le rapport de QA précise que les mannequins procéduraux sont provisoires.
-
-Un workflow en place ne signifie pas qu'il a déjà réussi. Consulter l'onglet **Actions** pour l'état réel après importation du projet.
+Aucun modèle photoréaliste ni build du jeu n'est déclaré terminé avant disponibilité des fichiers et vérification effective.
