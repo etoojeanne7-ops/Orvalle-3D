@@ -122,14 +122,31 @@ func _add_terrain_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vect
 func _build_forest_and_rocks() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 77391
+	var scanned_tree_scene: PackedScene
+	var scanned_tree_path := "res://assets/environment/tree_small_02_optimized.glb"
+	if ResourceLoader.exists(scanned_tree_path):
+		var loaded_tree = load(scanned_tree_path)
+		if loaded_tree is PackedScene:
+			scanned_tree_scene = loaded_tree as PackedScene
+			print("ORVALLE CC0 POLY HAVEN TREE MODEL LOADED")
+	else:
+		push_warning("Poly Haven tree model absent; procedural tree fallback remains active.")
 	for i in range(64):
-		var tree := _make_tree(rng.randf_range(0.75, 1.35))
+		var tree: Node3D
+		if scanned_tree_scene != null and i < 14:
+			tree = scanned_tree_scene.instantiate() as Node3D
+			if tree == null:
+				tree = _make_tree(rng.randf_range(0.75, 1.35))
+		else:
+			tree = _make_tree(rng.randf_range(0.75, 1.35))
 		var angle := rng.randf_range(0.0, TAU)
 		var radius := rng.randf_range(9.0, 54.0)
 		var x := cos(angle) * radius
 		var z := sin(angle) * radius
 		tree.position = Vector3(x, _terrain_height(x, z, _forest_noise()), z)
 		tree.rotation.y = rng.randf_range(0.0, TAU)
+		if scanned_tree_scene != null and i < 14:
+			tree.scale = Vector3.ONE * rng.randf_range(0.75, 1.15)
 		add_child(tree)
 	for i in range(28):
 		var rock := MeshInstance3D.new()
