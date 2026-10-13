@@ -4,10 +4,12 @@ on:
   push:
     paths:
       - "OrvalleNative/**"
+      - "Orvalle-3D-CI-Prepared.zip"
       - ".github/workflows/orvalle-godot-check.yml"
   pull_request:
     paths:
       - "OrvalleNative/**"
+      - "Orvalle-3D-CI-Prepared.zip"
       - ".github/workflows/orvalle-godot-check.yml"
   workflow_dispatch:
 
@@ -17,16 +19,30 @@ permissions:
 jobs:
   validate-project:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Confirm project files exist
+      - name: Locate native project (direct import or uploaded archive)
+        id: project
+        shell: bash
         run: |
-          test -f OrvalleNative/project.godot
-          test -f OrvalleNative/scenes/Main.tscn
-          test -f OrvalleNative/tests/terrain_parity.gd
+          if [ -f OrvalleNative/project.godot ]; then
+            echo "path=OrvalleNative" >> "$GITHUB_OUTPUT"
+          elif [ -f Orvalle-3D-CI-Prepared.zip ]; then
+            mkdir -p /tmp/orvalle-import
+            unzip -q Orvalle-3D-CI-Prepared.zip -d /tmp/orvalle-import
+            if [ -f /tmp/orvalle-import/orvalle-workspace/OrvalleNative/project.godot ]; then
+              echo "path=/tmp/orvalle-import/orvalle-workspace/OrvalleNative" >> "$GITHUB_OUTPUT"
+            else
+              echo "Archive does not contain the expected OrvalleNative/project.godot path."
+              exit 1
+            fi
+          else
+            echo "No OrvalleNative/project.godot or Orvalle-3D-CI-Prepared.zip found."
+            exit 1
+          fi
 
       - name: Install Godot 4.3
         uses: chickensoft-games/setup-godot@v2
@@ -35,10 +51,10 @@ jobs:
           use-dotnet: false
 
       - name: Import and parse project
-        run: godot --headless --path OrvalleNative --editor --quit
+        run: godot --headless --path "${{ steps.project.outputs.path }}" --editor --quit
 
       - name: Verify terrain parity fixtures
-        run: godot --headless --path OrvalleNative --script res://tests/terrain_parity.gd
+        run: godot --headless --path "${{ steps.project.outputs.path }}" --script res://tests/terrain_parity.gd
 
       - name: Run scene startup smoke test
-        run: godot --headless --path OrvalleNative --quit-after 8
+        run: godot --headless --path "${{ steps.project.outputs.path }}" --quit-after 8
