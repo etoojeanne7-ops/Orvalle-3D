@@ -1,0 +1,56 @@
+name: Orvalle native validation and source package
+
+on:
+  push:
+    paths:
+      - "OrvalleNative/**"
+      - "assets/characters/**"
+      - ".github/workflows/orvalle-package.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.3
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.3.0
+          use-dotnet: false
+
+      - name: Validate native project files
+        run: |
+          test -f OrvalleNative/project.godot
+          test -f OrvalleNative/scenes/main.tscn
+          test -f OrvalleNative/scripts/main.gd
+          test -f OrvalleNative/tests/smoke_test.gd
+          godot --headless --version
+
+      - name: Import and parse Godot project
+        run: godot --headless --editor --path OrvalleNative --quit
+
+      - name: Smoke test scene and runtime initialization
+        run: godot --headless --path OrvalleNative --script res://tests/smoke_test.gd
+
+      - name: Package native project sources
+        run: |
+          mkdir -p dist
+          zip -r dist/orvalle-native-project.zip OrvalleNative assets/characters             -x '*/.godot/*' '*/.git/*'
+          sha256sum dist/orvalle-native-project.zip | tee dist/orvalle-native-project.sha256
+
+      - name: Upload validated source package
+        uses: actions/upload-artifact@v4
+        with:
+          name: orvalle-native-project
+          path: |
+            dist/orvalle-native-project.zip
+            dist/orvalle-native-project.sha256
+          if-no-files-found: error
+          retention-days: 30
