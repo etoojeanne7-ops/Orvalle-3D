@@ -1,0 +1,54 @@
+name: Orvalle native Godot validation
+
+on:
+  push:
+    paths:
+      - "OrvalleNative/**"
+      - ".github/workflows/orvalle-native-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: orvalle-native-check
+  cancel-in-progress: true
+
+jobs:
+  godot-headless-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Orvalle
+        uses: actions/checkout@v4
+
+      - name: Install Godot 4.3
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.3.0
+          use-dotnet: false
+
+      - name: Verify project exists
+        run: |
+          test -f OrvalleNative/project.godot
+          test -f OrvalleNative/scenes/main.tscn
+          test -f OrvalleNative/scripts/main.gd
+          godot --headless --version
+
+      - name: Import resources and parse project
+        run: godot --headless --editor --path OrvalleNative --quit
+
+      - name: Run native scene smoke test
+        run: godot --headless --path OrvalleNative --script res://tests/smoke_test.gd
+
+      - name: Upload Godot logs and project metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orvalle-native-validation
+          path: |
+            OrvalleNative/project.godot
+            OrvalleNative/scenes/main.tscn
+            OrvalleNative/scripts/main.gd
+          if-no-files-found: error
+          retention-days: 14
