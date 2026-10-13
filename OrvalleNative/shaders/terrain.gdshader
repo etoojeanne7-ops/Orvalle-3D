@@ -1,6 +1,10 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_schlick_ggx;
 
+uniform sampler2D ground_albedo : source_color, repeat_enable;
+uniform sampler2D ground_roughness : repeat_enable;
+uniform float texture_world_scale : hint_range(0.25, 8.0) = 2.0;
+
 varying vec3 terrain_local_position;
 
 float hash21(vec2 p) {
@@ -37,20 +41,26 @@ void vertex() {
 
 void fragment() {
 	vec2 p = terrain_local_position.xz;
+	vec2 uv = p / max(texture_world_scale, 0.25);
 	float broad = fbm(p * 0.075);
 	float fine = fbm(p * 1.7);
 	float grain = value_noise(p * 8.0);
 	float slope = 1.0 - clamp(dot(normalize(NORMAL), vec3(0.0, 1.0, 0.0)), 0.0, 1.0);
+
 	vec3 grass_dark = vec3(0.075, 0.15, 0.065);
 	vec3 grass_light = vec3(0.23, 0.31, 0.12);
-	vec3 soil = vec3(0.24, 0.19, 0.11);
+	vec3 procedural_grass = mix(grass_dark, grass_light, clamp(broad * 0.9 + fine * 0.3, 0.0, 1.0));
+	procedural_grass = mix(procedural_grass, vec3(0.24, 0.19, 0.11), smoothstep(0.60, 0.77, fine) * 0.55);
+	procedural_grass *= mix(0.82, 1.13, grain);
+
+	// Real CC0 Poly Haven albedo texture supplies leaf litter, twigs, moss and soil detail.
+	vec3 scanned_ground = texture(ground_albedo, uv).rgb;
+	scanned_ground *= mix(0.88, 1.12, broad);
+	vec3 ground_color = mix(procedural_grass, scanned_ground, 0.82);
 	vec3 stone = vec3(0.28, 0.29, 0.27);
-	vec3 grass = mix(grass_dark, grass_light, clamp(broad * 0.9 + fine * 0.3, 0.0, 1.0));
-	grass = mix(grass, soil, smoothstep(0.60, 0.77, fine) * 0.55);
-	grass *= mix(0.82, 1.13, grain);
 	float rock_mask = smoothstep(0.24, 0.62, slope);
 	rock_mask = max(rock_mask, smoothstep(2.0, 3.2, terrain_local_position.y) * 0.35);
-	ALBEDO = mix(grass, stone * mix(0.82, 1.14, fine), clamp(rock_mask, 0.0, 0.92));
-	ROUGHNESS = 0.94;
+	ALBEDO = mix(ground_color, stone * mix(0.82, 1.14, fine), clamp(rock_mask, 0.0, 0.92));
+	ROUGHNESS = clamp(texture(ground_roughness, uv).r, 0.65, 1.0);
 	METALLIC = 0.0;
 }
