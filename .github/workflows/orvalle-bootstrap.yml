@@ -8,6 +8,7 @@ on:
     paths:
       - ".github/workflows/orvalle-bootstrap.yml"
       - "assets/characters/**"
+      - "OrvalleNative/**"
 
 permissions:
   contents: write
@@ -104,13 +105,22 @@ jobs:
           EOF
           sha256sum assets/characters/orvalle_human_base_cc0.glb | tee assets/characters/orvalle_human_base_cc0.sha256
 
+      - name: Install the human model into the native Godot game
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p OrvalleNative/characters
+          cp assets/characters/orvalle_human_base_cc0.glb OrvalleNative/characters/orvalle_human_base_cc0.glb
+          cp assets/characters/MODEL_LICENSES.md OrvalleNative/characters/MODEL_LICENSES.md
+          echo "Human base model copied into the native game. This is a rigged starter model, not photorealistic final art."
+
       - name: Commit the downloaded model to the Orvalle repository
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/characters/orvalle_human_base_cc0.glb assets/characters/MODEL_LICENSES.md assets/characters/orvalle_human_base_cc0.sha256
+          git add assets/characters/orvalle_human_base_cc0.glb assets/characters/MODEL_LICENSES.md assets/characters/orvalle_human_base_cc0.sha256 OrvalleNative/characters/orvalle_human_base_cc0.glb OrvalleNative/characters/MODEL_LICENSES.md
           if git diff --cached --quiet; then
             echo "Model and license files already committed; no repository change needed."
           else
