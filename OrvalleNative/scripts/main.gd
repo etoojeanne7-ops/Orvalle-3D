@@ -85,11 +85,17 @@ func _build_terrain() -> void:
 	var mesh_instance := MeshInstance3D.new()
 	mesh_instance.name = "TerrainMesh"
 	mesh_instance.mesh = terrain_mesh
-	var grass := StandardMaterial3D.new()
-	grass.albedo_color = Color(0.22, 0.30, 0.17)
-	grass.roughness = 1.0
-	grass.vertex_color_use_as_albedo = true
-	mesh_instance.material_override = grass
+	var terrain_material := ShaderMaterial.new()
+	var terrain_shader := load("res://shaders/terrain.gdshader") as Shader
+	if terrain_shader != null:
+		terrain_material.shader = terrain_shader
+		mesh_instance.material_override = terrain_material
+	else:
+		var grass := StandardMaterial3D.new()
+		grass.albedo_color = Color(0.22, 0.30, 0.17)
+		grass.roughness = 1.0
+		grass.vertex_color_use_as_albedo = true
+		mesh_instance.material_override = grass
 	ground.add_child(mesh_instance)
 	var collision := CollisionShape3D.new()
 	collision.name = "TerrainCollision"
