@@ -89,6 +89,15 @@ func _build_terrain() -> void:
 	var terrain_shader := load("res://shaders/terrain.gdshader") as Shader
 	if terrain_shader != null:
 		terrain_material.shader = terrain_shader
+		var albedo_path := "res://assets/environment/forest_ground_albedo.jpg"
+		var roughness_path := "res://assets/environment/forest_ground_roughness.jpg"
+		if ResourceLoader.exists(albedo_path) and ResourceLoader.exists(roughness_path):
+			terrain_material.set_shader_parameter("ground_albedo", load(albedo_path))
+			terrain_material.set_shader_parameter("ground_roughness", load(roughness_path))
+			terrain_material.set_shader_parameter("texture_world_scale", 2.0)
+			print("ORVALLE CC0 PBR GROUND TEXTURES LOADED: Poly Haven Forest Ground 01")
+		else:
+			push_warning("Poly Haven ground maps missing; procedural terrain shader remains active.")
 		mesh_instance.material_override = terrain_material
 	else:
 		var grass := StandardMaterial3D.new()
