@@ -61,10 +61,10 @@ jobs:
           use-dotnet: false
 
       - name: Import and parse project
-        run: godot --headless --path "\${{ steps.project.outputs.path }}" --editor --quit
+        run: godot --headless --path "${{ steps.project.outputs.path }}" --editor --quit
 
       - name: Verify terrain parity fixtures
-        run: godot --headless --path "\${{ steps.project.outputs.path }}" --script res://tests/terrain_parity.gd
+        run: godot --headless --path "${{ steps.project.outputs.path }}" --script res://tests/terrain_parity.gd
 
       - name: Run scene startup smoke test
-        run: godot --headless --path "\${{ steps.project.outputs.path }}" --quit-after 8
+        run: godot --headless --path "${{ steps.project.outputs.path }}" --quit-after 8
