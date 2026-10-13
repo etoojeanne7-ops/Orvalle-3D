@@ -7,6 +7,10 @@ func _initialize() -> void:
 		quit(1)
 		return
 	var world: Node3D = packed.instantiate() as Node3D
+	if world == null:
+		push_error("Main scene is not Node3D")
+		quit(1)
+		return
 	root.add_child(world)
 	await process_frame
 	await process_frame
@@ -15,13 +19,13 @@ func _initialize() -> void:
 			push_error("Required node missing: " + node_name)
 			quit(1)
 			return
-	var tree_count := 0
-	for child in world.get_children():
-		if child.name.begins_with("Tree"):
-			tree_count += 1
-	if tree_count < 20:
-		push_error("Expected generated trees; found " + str(tree_count))
+	if world.get_node("Ground").get_child_count() < 2:
+		push_error("Terrain mesh or collision missing")
 		quit(1)
 		return
-	print("ORVALLE WORLD TEST PASS: terrain, player, HUD and trees")
+	if world.get_child_count() < 30:
+		push_error("Procedural environment objects missing")
+		quit(1)
+		return
+	print("ORVALLE WORLD TEST PASS: terrain, player, HUD and procedural environment")
 	quit(0)
