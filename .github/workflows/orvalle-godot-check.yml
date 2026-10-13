@@ -5,11 +5,13 @@ on:
     paths:
       - "OrvalleNative/**"
       - "Orvalle-3D-CI-Prepared.zip"
+      - "Orvalle-3D-CI-Prepared-Realism-Pipeline.zip"
       - ".github/workflows/orvalle-godot-check.yml"
   pull_request:
     paths:
       - "OrvalleNative/**"
       - "Orvalle-3D-CI-Prepared.zip"
+      - "Orvalle-3D-CI-Prepared-Realism-Pipeline.zip"
       - ".github/workflows/orvalle-godot-check.yml"
   workflow_dispatch:
 
@@ -30,18 +32,26 @@ jobs:
         run: |
           if [ -f OrvalleNative/project.godot ]; then
             echo "path=OrvalleNative" >> "$GITHUB_OUTPUT"
-          elif [ -f Orvalle-3D-CI-Prepared.zip ]; then
-            mkdir -p /tmp/orvalle-import
-            unzip -q Orvalle-3D-CI-Prepared.zip -d /tmp/orvalle-import
-            if [ -f /tmp/orvalle-import/orvalle-workspace/OrvalleNative/project.godot ]; then
-              echo "path=/tmp/orvalle-import/orvalle-workspace/OrvalleNative" >> "$GITHUB_OUTPUT"
+          else
+            archive=""
+            if [ -f Orvalle-3D-CI-Prepared-Realism-Pipeline.zip ]; then
+              archive="Orvalle-3D-CI-Prepared-Realism-Pipeline.zip"
+            elif [ -f Orvalle-3D-CI-Prepared.zip ]; then
+              archive="Orvalle-3D-CI-Prepared.zip"
+            fi
+            if [ -n "$archive" ]; then
+              mkdir -p /tmp/orvalle-import
+              unzip -q "$archive" -d /tmp/orvalle-import
+              if [ -f /tmp/orvalle-import/orvalle-workspace/OrvalleNative/project.godot ]; then
+                echo "path=/tmp/orvalle-import/orvalle-workspace/OrvalleNative" >> "$GITHUB_OUTPUT"
+              else
+                echo "Archive does not contain the expected OrvalleNative/project.godot path."
+                exit 1
+              fi
             else
-              echo "Archive does not contain the expected OrvalleNative/project.godot path."
+              echo "No OrvalleNative/project.godot or prepared project archive found."
               exit 1
             fi
-          else
-            echo "No OrvalleNative/project.godot or Orvalle-3D-CI-Prepared.zip found."
-            exit 1
           fi
 
       - name: Install Godot 4.3
@@ -51,10 +61,10 @@ jobs:
           use-dotnet: false
 
       - name: Import and parse project
-        run: godot --headless --path "${{ steps.project.outputs.path }}" --editor --quit
+        run: godot --headless --path "\${{ steps.project.outputs.path }}" --editor --quit
 
       - name: Verify terrain parity fixtures
-        run: godot --headless --path "${{ steps.project.outputs.path }}" --script res://tests/terrain_parity.gd
+        run: godot --headless --path "\${{ steps.project.outputs.path }}" --script res://tests/terrain_parity.gd
 
       - name: Run scene startup smoke test
-        run: godot --headless --path "${{ steps.project.outputs.path }}" --quit-after 8
+        run: godot --headless --path "\${{ steps.project.outputs.path }}" --quit-after 8
