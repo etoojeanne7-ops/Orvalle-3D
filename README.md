@@ -1,28 +1,35 @@
 # Orvalle 3D
 
-Projet de jeu d'aventure 3D avec une cible native Godot 4 et un workflow de validation continue.
+Projet d'aventure 3D basé sur Godot 4, avec validation automatisée par GitHub Actions.
 
-> **État réel du transfert :** le dépôt est en cours d'initialisation. Le paquet complet préparé dans ChatGPT doit encore être importé dans ce dépôt. Les fichiers de CI ci-dessous attendent le dossier `OrvalleNative/`.
+## Importer le projet préparé
 
-## Structure attendue
+Le dépôt contient déjà le workflow `.github/workflows/orvalle-godot-check.yml`. Pour transférer l'ensemble du workspace préparé depuis ChatGPT, téléverse le fichier **`Orvalle-3D-CI-Prepared.zip` à la racine de ce dépôt**. Le workflow sait ouvrir cette archive dans l'environnement de CI et rechercher le projet natif à l'intérieur.
 
-- `OrvalleNative/project.godot` — projet natif Godot.
-- `OrvalleNative/scenes/Main.tscn` — scène de démarrage.
-- `OrvalleNative/scripts/` — gameplay, terrain, joueur, acteurs.
-- `OrvalleNative/tests/` — tests automatisés.
-- `.github/workflows/orvalle-godot-check.yml` — validation Godot automatisée.
+Lien du dépôt : https://github.com/etoojeanne7-ops/Orvalle-3D
 
-## Lancer localement
+### Import via le site GitHub
 
-1. Installer Godot 4.3 ou une version compatible.
-2. Ouvrir `OrvalleNative/project.godot` dans Godot.
-3. Lancer la scène principale.
-4. Exécuter les tests headless décrits dans le workflow GitHub Actions.
+1. Ouvre l'onglet **Code**.
+2. Appuie sur **Add file → Upload files**.
+3. Sélectionne `Orvalle-3D-CI-Prepared.zip` depuis ton appareil.
+4. Valide le commit sur la branche `main`.
+5. Ouvre l'onglet **Actions** pour voir le résultat réel du workflow.
 
-## Qualité et limites connues
+Le ZIP est une archive de transfert : si tu veux que chaque script et ressource apparaisse comme un fichier normal dans l'arborescence GitHub, il faudra ensuite importer le contenu du dossier interne `orvalle-workspace/` à la racine, ou faire un push Git depuis un environnement local.
 
-Les workflows sont des contrôles automatiques, pas une preuve de qualité graphique ou de compatibilité sur appareil. Les personnages doivent être considérés comme provisoires tant que de vrais modèles 3D riggés et photoréalistes ne sont pas intégrés et validés. Les exports Android/Windows et les tests sur appareils réels doivent être confirmés par des exécutions réussies.
+## Workflow de validation
 
-## Transfert des fichiers
+Le workflow tente de :
+- localiser le projet Godot directement dans `OrvalleNative/` ou dans le ZIP ;
+- importer et analyser le projet avec Godot 4.3 en mode headless ;
+- exécuter les tests de parité du terrain ;
+- lancer un test de démarrage de la scène principale.
 
-Le paquet complet du workspace préparé est disponible dans la conversation sous le nom `Orvalle-3D-CI-Prepared.zip`. Il doit être importé à la racine du dépôt en conservant les dossiers du projet. Ne pas importer le dossier parent `orvalle-workspace` comme seul niveau du jeu : les chemins du workflow supposent que `OrvalleNative/` et `.github/` sont à la racine.
+Un workflow ajouté n'est pas la preuve qu'il a réussi. Le résultat n'est confirmé que lorsque GitHub Actions termine avec le statut **Success**.
+
+## Limites connues
+
+- Les exports Android (APK/AAB) et Windows (EXE) ne sont pas encore configurés ni validés.
+- Les tests de performance doivent être effectués sur appareils réels.
+- Les modèles de personnages photoréalistes définitifs ne sont pas encore intégrés ; le rapport de QA du paquet précise que les acteurs procéduraux sont provisoires.
