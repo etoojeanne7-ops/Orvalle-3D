@@ -2,34 +2,33 @@
 
 Projet d'aventure 3D basé sur Godot 4, avec validation automatisée par GitHub Actions.
 
+## Pipeline personnages 3D réalistes
+
+Le dépôt comprend maintenant :
+- [Guide de production 3D en français](docs/PIPELINE_3D_FR.md)
+- [Exporteur Blender vers GLB](tools/blender_export_character.py)
+- [Contrôle structurel GLB](tools/validate_character_glb.py)
+- [Workflow de validation des personnages](.github/workflows/character-realism-gate.yml)
+
+Les fichiers finaux attendus sont `OrvalleNative/characters/Lena.glb` et `OrvalleNative/characters/Marec.glb`. Le contrôle échoue volontairement tant qu'ils sont absents ou incomplets. Un PASS structurel ne prouve pas le photoréalisme : une revue visuelle et des tests en jeu restent nécessaires.
+
 ## Importer le projet préparé
 
-Le dépôt contient déjà le workflow `.github/workflows/orvalle-godot-check.yml`. Pour transférer l'ensemble du workspace préparé depuis ChatGPT, téléverse le fichier **`Orvalle-3D-CI-Prepared.zip` à la racine de ce dépôt**. Le workflow sait ouvrir cette archive dans l'environnement de CI et rechercher le projet natif à l'intérieur.
+Le workflow `.github/workflows/orvalle-godot-check.yml` sait rechercher le projet natif dans le dossier `OrvalleNative/` ou dans l'archive de transfert. Le workspace complet n'est pas encore décompressé dans l'arborescence GitHub.
 
 Lien du dépôt : https://github.com/etoojeanne7-ops/Orvalle-3D
 
 ### Import via le site GitHub
-
 1. Ouvre l'onglet **Code**.
 2. Appuie sur **Add file → Upload files**.
 3. Sélectionne `Orvalle-3D-CI-Prepared.zip` depuis ton appareil.
 4. Valide le commit sur la branche `main`.
-5. Ouvre l'onglet **Actions** pour voir le résultat réel du workflow.
+5. Ouvre l'onglet **Actions** pour voir les résultats réels.
 
-Le ZIP est une archive de transfert : si tu veux que chaque script et ressource apparaisse comme un fichier normal dans l'arborescence GitHub, il faudra ensuite importer le contenu du dossier interne `orvalle-workspace/` à la racine, ou faire un push Git depuis un environnement local.
+L'archive contient des ressources binaires qui ne sont pas encore intégrées dans le dépôt. Le workflow Godot échoue donc tant que l'import complet n'est pas réalisé.
 
-## Workflow de validation
+## État de validation
 
-Le workflow tente de :
-- localiser le projet Godot directement dans `OrvalleNative/` ou dans le ZIP ;
-- importer et analyser le projet avec Godot 4.3 en mode headless ;
-- exécuter les tests de parité du terrain ;
-- lancer un test de démarrage de la scène principale.
+Le workflow de personnages a été exécuté par GitHub Actions et a échoué pour la raison attendue : les modèles `Lena.glb` et `Marec.glb` sont absents. Résultat réel : [exécution du contrôle des personnages](https://github.com/etoojeanne7-ops/Orvalle-3D/actions/runs/38454162365).
 
-Un workflow ajouté n'est pas la preuve qu'il a réussi. Le résultat n'est confirmé que lorsque GitHub Actions termine avec le statut **Success**.
-
-## Limites connues
-
-- Les exports Android (APK/AAB) et Windows (EXE) ne sont pas encore configurés ni validés.
-- Les tests de performance doivent être effectués sur appareils réels.
-- Les modèles de personnages photoréalistes définitifs ne sont pas encore intégrés ; le rapport de QA du paquet précise que les acteurs procéduraux sont provisoires.
+Les exports Android/Windows, la compilation Godot, les performances sur appareils réels et le photoréalisme des personnages ne sont pas validés à ce stade.
