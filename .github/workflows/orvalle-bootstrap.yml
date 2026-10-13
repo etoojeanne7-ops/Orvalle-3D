@@ -104,6 +104,53 @@ jobs:
           test -s "$out/forest_ground_roughness.jpg"
           file "$out"/*.jpg
 
+      - name: Download and optimize the real CC0 Poly Haven tree model
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/orvalle-tree OrvalleNative/assets/environment
+          curl --fail --location --retry 3 https://api.polyhaven.com/files/tree_small_02 --output /tmp/orvalle-tree/files.json
+          python3 -c 'import json; d=json.load(open("/tmp/orvalle-tree/files.json")); found=[]; walk=lambda x,p=(): ([(found.append((0 if "1k" in "/".join(map(str,p)).lower() else 1 if "2k" in "/".join(map(str,p)).lower() else 2,x["url"],"/".join(map(str,p)))) if isinstance(x.get("url"),str) and x["url"].lower().endswith(".zip") and "gltf" in "/".join(map(str,p)).lower() else None), [walk(v,p+(k,)) for k,v in x.items()]) if isinstance(x,dict) else ([walk(v,p+(i,)) for i,v in enumerate(x)] if isinstance(x,list) else None)); walk(d); found.sort(); assert found, "Poly Haven GLTF archive not found"; print(found[0][1]); open("/tmp/orvalle-tree/url.txt","w").write(found[0][1])'
+          curl --fail --location --retry 3 "$(cat /tmp/orvalle-tree/url.txt)" --output /tmp/orvalle-tree/tree.zip
+          unzip -q /tmp/orvalle-tree/tree.zip -d /tmp/orvalle-tree/unpacked
+          model="$(find /tmp/orvalle-tree/unpacked -type f \( -iname '*.gltf' -o -iname '*.glb' \) | head -n 1)"
+          test -n "$model"
+          cat > /tmp/orvalle-tree/optimize.py <<'PY'
+          import bpy, os
+          src = os.environ["TREE_SOURCE"]
+          dst = os.environ["TREE_TARGET"]
+          bpy.ops.object.select_all(action="SELECT")
+          bpy.ops.object.delete(use_global=False)
+          bpy.ops.import_scene.gltf(filepath=src)
+          meshes = [o for o in bpy.context.scene.objects if o.type == "MESH"]
+          if not meshes:
+              raise RuntimeError("Poly Haven tree contains no mesh")
+          before = sum(len(o.data.polygons) for o in meshes)
+          for obj in meshes:
+              if len(obj.data.polygons) > 50000:
+                  bpy.context.view_layer.objects.active = obj
+                  obj.select_set(True)
+                  mod = obj.modifiers.new("OrvalleRealtimeLOD", "DECIMATE")
+                  mod.ratio = 0.18
+                  bpy.ops.object.modifier_apply(modifier=mod.name)
+                  obj.select_set(False)
+          after = sum(len(o.data.polygons) for o in meshes)
+          bpy.ops.object.select_all(action="SELECT")
+          bpy.ops.export_scene.gltf(filepath=dst, export_format="GLB")
+          if not os.path.isfile(dst) or os.path.getsize(dst) < 100000:
+              raise RuntimeError("Optimized GLB is missing or too small")
+          print("Poly Haven tree optimized:", before, "->", after, "polygons")
+          PY
+          TREE_SOURCE="$model" TREE_TARGET="$PWD/OrvalleNative/assets/environment/tree_small_02_optimized.glb" blender -b --python /tmp/orvalle-tree/optimize.py
+          cat >> OrvalleNative/assets/environment/ASSET_LICENSES.md <<'EOF'
+
+          ## Tree Small 02 — Poly Haven
+          - Asset page: https://polyhaven.com/a/tree_small_02
+          - License: CC0, as declared by Poly Haven.
+          - The downloaded glTF is optimized with Blender before being loaded in the game.
+          EOF
+          sha256sum OrvalleNative/assets/environment/tree_small_02_optimized.glb >> OrvalleNative/assets/environment/SHA256SUMS.txt
+
       - name: Record source and license
         run: |
           cat > assets/characters/MODEL_LICENSES.md <<'EOF'
