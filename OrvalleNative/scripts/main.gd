@@ -63,6 +63,7 @@ func _build_world() -> void:
 
 func _make_tree() -> Node3D:
 	var tree := Node3D.new()
+	tree.name = "Tree"
 	var trunk := MeshInstance3D.new()
 	var trunk_mesh := CylinderMesh.new()
 	trunk_mesh.top_radius = 0.18
