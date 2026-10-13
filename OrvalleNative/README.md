@@ -13,7 +13,7 @@ Ouvrir ce dossier dans Godot 4.3 et lancer `scenes/main.tscn`. Le workflow GitHu
 ## Personnages et niveau de réalisme
 Le jeu charge `characters/orvalle_human_base_cc0.glb` si le fichier est présent et tente de jouer une animation disponible. En cas d'absence du GLB, il affiche un proxy capsule pour les tests. Le modèle CC0 actuel est un **modèle humain de base riggé**, pas un humain photoréaliste final. Il ne faut pas le présenter comme Lena ou Marec ni comme un personnage fini.
 
-Le terrain a maintenant une surface irrégulière, une collision de terrain, un éclairage avec ombres, des variations de hauteur, des arbres et des rochers. Cela améliore le relief et la composition, mais les assets procéduraux ne remplacent pas encore des matériaux PBR détaillés, des scans de terrain, une végétation de qualité production ou un environnement photoréaliste.
+Le terrain utilise une texture PBR réelle « Forest Ground 01 » de Poly Haven (albedo et roughness 2K, licence CC0), avec variation procédurale complémentaire, relief/collision, ciel et ombres. Les arbres et rochers restent actuellement procéduraux : le niveau global n'est donc pas encore photoréaliste. Les modèles 3D Poly Haven sont également CC0, mais chaque asset doit être choisi selon son poids et son niveau de détail avant intégration.
 
 ## Critères avant de déclarer le jeu terminé
 - Remplacer la base humaine par des personnages réalistes avec visage détaillé, yeux, cheveux, vêtements, rig et animations testés.
