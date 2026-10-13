@@ -21,7 +21,7 @@ Lien du dépôt : https://github.com/etoojeanne7-ops/Orvalle-3D
 ### Import via le site GitHub
 1. Ouvre l'onglet **Code**.
 2. Appuie sur **Add file → Upload files**.
-3. Sélectionne `Orvalle-3D-CI-Prepared.zip` depuis ton appareil.
+3. Sélectionne `Orvalle-3D-CI-Prepared-Realism-Pipeline.zip` depuis ton appareil.
 4. Valide le commit sur la branche `main`.
 5. Ouvre l'onglet **Actions** pour voir les résultats réels.
 
@@ -29,6 +29,6 @@ L'archive contient des ressources binaires qui ne sont pas encore intégrées da
 
 ## État de validation
 
-Le workflow de personnages a été exécuté par GitHub Actions et a échoué pour la raison attendue : les modèles `Lena.glb` et `Marec.glb` sont absents. Résultat réel : [exécution du contrôle des personnages](https://github.com/etoojeanne7-ops/Orvalle-3D/actions/runs/38454162365).
+Le workflow de personnages a été exécuté par GitHub Actions et a échoué pour la raison attendue : les modèles `Lena.glb` et `Marec.glb` sont absents. Résultat réel : [exécution du contrôle des personnages](https://github.com/etoojeanne7-ops/Orvalle-3D/actions/runs/38454234566).
 
 Les exports Android/Windows, la compilation Godot, les performances sur appareils réels et le photoréalisme des personnages ne sont pas validés à ce stade.
