@@ -1,0 +1,138 @@
+name: Orvalle GitHub engine and 3D asset bootstrap
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/orvalle-bootstrap.yml"
+      - "assets/characters/**"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: orvalle-bootstrap
+  cancel-in-progress: false
+
+jobs:
+  install-engine-and-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Orvalle
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Godot 4.3 in the GitHub Actions runner
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.3.0
+          use-dotnet: false
+
+      - name: Verify Godot installation
+        run: |
+          godot --headless --version
+          command -v godot
+
+      - name: Install Blender and utilities in the GitHub Actions runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender curl unzip
+          blender --version | head -n 2
+          curl --version | head -n 1
+
+      - name: Download the CC0 rigged human base model
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/characters
+          model="assets/characters/orvalle_human_base_cc0.glb"
+          if [ ! -s "$model" ]; then
+            curl --fail --location --retry 3 --retry-delay 2 \
+              "https://raw.githubusercontent.com/UMRAM-Bilkent/supine-human-model/main/assets/human.glb" \
+              --output "$model"
+          fi
+          python3 - <<'PY'
+          import json, struct
+          from pathlib import Path
+          p = Path("assets/characters/orvalle_human_base_cc0.glb")
+          data = p.read_bytes()
+          if len(data) < 20:
+              raise SystemExit(f"GLB trop petit: {len(data)} octets")
+          magic, version, declared = struct.unpack_from("<III", data, 0)
+          if magic != 0x46546C67 or version != 2 or declared != len(data):
+              raise SystemExit("Signature/version/taille GLB invalides")
+          off = 12
+          doc = None
+          while off + 8 <= len(data):
+              length, kind = struct.unpack_from("<II", data, off)
+              off += 8
+              chunk = data[off:off+length]
+              if off + length > len(data):
+                  raise SystemExit("Chunk GLB tronqué")
+              if kind == 0x4E4F534A:
+                  doc = json.loads(chunk.decode("utf-8").rstrip(" \\t\\r\\n\\0"))
+              off += length
+          if not isinstance(doc, dict):
+              raise SystemExit("Document glTF JSON absent")
+          meshes = doc.get("meshes", [])
+          skins = doc.get("skins", [])
+          animations = doc.get("animations", [])
+          if not meshes:
+              raise SystemExit("Le modèle ne contient aucun maillage")
+          if not skins:
+              raise SystemExit("Le modèle ne contient aucune armature/skin")
+          if not animations:
+              raise SystemExit("Le modèle ne contient aucune animation")
+          print(f"GLB structure PASS: {len(data)} octets, {len(meshes)} maillage(s), {len(skins)} skin(s), {len(animations)} animation(s)")
+          PY
+
+      - name: Record source and license
+        run: |
+          cat > assets/characters/MODEL_LICENSES.md <<'EOF'
+          # Orvalle character asset sources
+
+          ## orvalle_human_base_cc0.glb
+          - Source: UMRAM-Bilkent/supine-human-model, file `assets/human.glb`
+          - Source URL: https://github.com/UMRAM-Bilkent/supine-human-model
+          - License: CC0 1.0, as stated by the source repository.
+          - Contents: rigged/skinned generic human base with walk/idle animations.
+          - Important: this is a generic stylized/base model, not a photorealistic final character and not the finished character Lena or Marec. It is a usable starting asset for the character pipeline only.
+          EOF
+          sha256sum assets/characters/orvalle_human_base_cc0.glb | tee assets/characters/orvalle_human_base_cc0.sha256
+
+      - name: Commit the downloaded model to the Orvalle repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/characters/orvalle_human_base_cc0.glb assets/characters/MODEL_LICENSES.md assets/characters/orvalle_human_base_cc0.sha256
+          if git diff --cached --quiet; then
+            echo "Model and license files already committed; no repository change needed."
+          else
+            git commit -m "Add CC0 rigged human base model for Orvalle"
+            git push
+          fi
+
+      - name: Check whether the complete native Godot project is present
+        shell: bash
+        run: |
+          if [ -f OrvalleNative/project.godot ]; then
+            echo "Native Godot project found."
+            godot --headless --path OrvalleNative --editor --quit
+          else
+            echo "::warning::Godot and Blender are installed in this runner and the CC0 base model is validated, but OrvalleNative/project.godot is not yet committed to the repository. A complete game build cannot be claimed until the native project source is present."
+          fi
+
+      - name: Upload bootstrap report and model
+        uses: actions/upload-artifact@v4
+        with:
+          name: orvalle-engine-and-3d-assets
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            assets/characters/orvalle_human_base_cc0.glb
+            assets/characters/MODEL_LICENSES.md
+            assets/characters/orvalle_human_base_cc0.sha256
