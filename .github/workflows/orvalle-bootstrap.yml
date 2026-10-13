@@ -91,6 +91,19 @@ jobs:
           print(f"GLB structure PASS: {len(data)} octets, {len(meshes)} maillage(s), {len(skins)} skin(s), {len(animations)} animation(s)")
           PY
 
+      - name: Download real CC0 PBR forest-floor textures from Poly Haven
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="OrvalleNative/assets/environment"
+          mkdir -p "$out"
+          base="https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/forrest_ground_01"
+          curl --fail --location --retry 3 "$base/forrest_ground_01_diff_2k.jpg" --output "$out/forest_ground_albedo.jpg"
+          curl --fail --location --retry 3 "$base/forrest_ground_01_rough_2k.jpg" --output "$out/forest_ground_roughness.jpg"
+          test -s "$out/forest_ground_albedo.jpg"
+          test -s "$out/forest_ground_roughness.jpg"
+          file "$out"/*.jpg
+
       - name: Record source and license
         run: |
           cat > assets/characters/MODEL_LICENSES.md <<'EOF'
@@ -101,9 +114,20 @@ jobs:
           - Source URL: https://github.com/UMRAM-Bilkent/supine-human-model
           - License: CC0 1.0, as stated by the source repository.
           - Contents: rigged/skinned generic human base with walk/idle animations.
-          - Important: this is a generic stylized/base model, not a photorealistic final character and not the finished character Lena or Marec. It is a usable starting asset for the character pipeline only.
+          - Important: this is a generic base model, not a photorealistic final character and not the finished character Lena or Marec.
+          EOF
+          cat > OrvalleNative/assets/environment/ASSET_LICENSES.md <<'EOF'
+          # Orvalle environment asset sources
+
+          ## Forest Ground 01 — Poly Haven
+          - Asset page: https://polyhaven.com/a/forrest_ground_01
+          - Downloaded maps: 2K diffuse/albedo JPG and roughness JPG.
+          - License: CC0, as declared on the asset page.
+          - Runtime use: tiled ground albedo and roughness in the Godot terrain shader.
+          - These are actual material maps, not photos used as scenery.
           EOF
           sha256sum assets/characters/orvalle_human_base_cc0.glb | tee assets/characters/orvalle_human_base_cc0.sha256
+          sha256sum OrvalleNative/assets/environment/*.jpg | tee OrvalleNative/assets/environment/SHA256SUMS.txt
 
       - name: Install the human model into the native Godot game
         shell: bash
@@ -112,33 +136,35 @@ jobs:
           mkdir -p OrvalleNative/characters
           cp assets/characters/orvalle_human_base_cc0.glb OrvalleNative/characters/orvalle_human_base_cc0.glb
           cp assets/characters/MODEL_LICENSES.md OrvalleNative/characters/MODEL_LICENSES.md
-          echo "Human base model copied into the native game. This is a rigged starter model, not photorealistic final art."
+          echo "Human base model copied into the native game. It is a rigged starter model, not photorealistic final art."
 
-      - name: Commit the downloaded model to the Orvalle repository
+      - name: Commit verified 3D assets to the Orvalle repository
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/characters/orvalle_human_base_cc0.glb assets/characters/MODEL_LICENSES.md assets/characters/orvalle_human_base_cc0.sha256 OrvalleNative/characters/orvalle_human_base_cc0.glb OrvalleNative/characters/MODEL_LICENSES.md
+          git add assets/characters/orvalle_human_base_cc0.glb assets/characters/MODEL_LICENSES.md assets/characters/orvalle_human_base_cc0.sha256 OrvalleNative/characters/orvalle_human_base_cc0.glb OrvalleNative/characters/MODEL_LICENSES.md OrvalleNative/assets/environment
           if git diff --cached --quiet; then
-            echo "Model and license files already committed; no repository change needed."
+            echo "Verified model and Poly Haven PBR maps already committed."
           else
-            git commit -m "Add CC0 rigged human base model for Orvalle"
+            git commit -m "Integrate CC0 PBR forest ground textures"
             git push
           fi
 
-      - name: Check whether the complete native Godot project is present
+      - name: Import and validate native Godot project
         shell: bash
         run: |
+          set -euo pipefail
           if [ -f OrvalleNative/project.godot ]; then
-            echo "Native Godot project found."
             godot --headless --path OrvalleNative --editor --quit
+            godot --headless --path OrvalleNative --quit-after 3
           else
-            echo "::warning::Godot and Blender are installed in this runner and the CC0 base model is validated, but OrvalleNative/project.godot is not yet committed to the repository. A complete game build cannot be claimed until the native project source is present."
+            echo "::error::OrvalleNative/project.godot is missing; native game cannot be validated."
+            exit 1
           fi
 
-      - name: Upload bootstrap report and model
+      - name: Upload bootstrap report and verified assets
         uses: actions/upload-artifact@v4
         with:
           name: orvalle-engine-and-3d-assets
@@ -148,3 +174,4 @@ jobs:
             assets/characters/orvalle_human_base_cc0.glb
             assets/characters/MODEL_LICENSES.md
             assets/characters/orvalle_human_base_cc0.sha256
+            OrvalleNative/assets/environment/
