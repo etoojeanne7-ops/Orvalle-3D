@@ -34,7 +34,7 @@ func _build_world() -> void:
 	environment.ambient_light_color = Color(0.72, 0.78, 0.88)
 	environment.ambient_light_energy = 0.8
 	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	environment. ssao_enabled = true
+	environment.ssao_enabled = true
 	world_env.environment = environment
 	add_child(world_env)
 
